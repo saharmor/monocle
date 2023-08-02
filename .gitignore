@@ -1,0 +1,4 @@
+temp_images/*
+.vscode/*
+*.jpeg
+*.png
