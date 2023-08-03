@@ -1,4 +1,7 @@
 temp_images/*
 .vscode/*
+backend/generated_images/*
 *.jpeg
 *.png
+test_local.py
+.env.local
