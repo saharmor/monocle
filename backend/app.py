@@ -12,19 +12,19 @@ CORS(app)
 
 @app.route('/receive-img', methods=['POST'])
 def receive_image():
-    generate_image_controlnet()
-    image_data = request.get_data()
-    dest_email = request.args.get('dest_email')
+    image_data = request.files['file']
+    dest_email = request.form.get('destEmail')
+    image_style = request.form.get('imageStyle')
 
-    clean_image_data = image_data[2:-3] # remove unnecessary prefix (b') and suffix (\r\n)
+    clean_image_data = image_data.read()[2:-3] # remove unnecessary prefix (b') and suffix (\r\n)
     image_name = f'image_{datetime.now()}.jpeg'
     byte_content = bytes(clean_image_data.decode('unicode_escape'), 'latin1')
     
     with open(image_name, 'wb') as f:
         f.write(byte_content)
 
-    image_path = generate_image_controlnet(image_name, "Van Gogh")
-    send_email(image_path, dest_email)
+    # image_path = generate_image_controlnet(image_name, image_style)
+    # send_email(image_path, dest_email)
     return '', 200
 
 def generate_image_controlnet(image_name: str, image_style: str):
@@ -52,6 +52,9 @@ def generate_image_controlnet(image_name: str, image_style: str):
                     api_name="/canny"
     )
 
+    if not os.path.exists(result):
+        return None
+    
     return f'{os.path.join(result, get_hf_output_image_dir(result))}/image.png'
 
 def get_creation_time(path):
@@ -60,15 +63,15 @@ def get_creation_time(path):
   return stat.st_ctime
 
 def get_hf_output_image_dir(path):
-  """Gets the first directory that was created in the specified path."""
+  """Gets the second directory that was created in the specified path."""
   directories = os.listdir(path)
   creation_times = []
   for directory in directories:
-    path = os.path.join(path, directory)
-    if not os.path.isdir(path):
+    full_path = os.path.join(path, directory)
+    if not os.path.isdir(full_path):
         continue
 
-    creation_time = get_creation_time(path)
+    creation_time = get_creation_time(full_path)
     creation_times.append((directory, creation_time))
 
   first_created_directory = min(creation_times, key=lambda x: x[1])[0]
